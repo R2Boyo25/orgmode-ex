@@ -1,0 +1,3 @@
+#+TITLE: Metadef tests
+#+AUTHOR: Kazani
+#+DESCRIPTION: This is a test of metadefs (#+NAME: value)
