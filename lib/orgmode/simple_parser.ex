@@ -6,7 +6,7 @@ defmodule Orgmode.SimpleParser do
   @doc """
       iex(1)> Orgmode.SimpleParser.get_while("abc123", &Orgmode.SimpleParser.is_alpha/1)
       ["abc", "123"]
-  
+
       iex(2)> Orgmode.SimpleParser.get_while("abc123", &Orgmode.SimpleParser.is_digit/1)
       ["", "abc123"]
 
@@ -17,18 +17,24 @@ defmodule Orgmode.SimpleParser do
       ** (Orgmode.Error) Expected at most 2 matching characters.
   """
   def get_while(str, func, min \\ 0, max \\ -1) when is_function(func, 1) and is_bitstring(str) do
-    [head, remaining] = str
-    |> String.codepoints
-    |> Enum.split_while(fn (char) -> func.(List.first(String.to_charlist(char))) end)
-    |> Tuple.to_list
-    |> Enum.map(&_join_with_empty_string/1)
+    [head, remaining] =
+      str
+      |> String.codepoints()
+      |> Enum.split_while(fn char -> func.(List.first(String.to_charlist(char))) end)
+      |> Tuple.to_list()
+      |> Enum.map(&_join_with_empty_string/1)
 
     len = String.length(head)
-    
+
     cond do
-      len < min -> raise Orgmode.Error, message: "Expected at least #{min} matching characters."
-      len > max and max >= 0 -> raise Orgmode.Error, message: "Expected at most #{max} matching characters."
-      true -> [head, remaining]
+      len < min ->
+        raise Orgmode.Error, message: "Expected at least #{min} matching characters."
+
+      len > max and max >= 0 ->
+        raise Orgmode.Error, message: "Expected at most #{max} matching characters."
+
+      true ->
+        [head, remaining]
     end
   end
 
@@ -124,7 +130,14 @@ defmodule Orgmode.SimpleParser do
   """
   def is_whitespace(char) do
     # expand to contain all in https://en.wikipedia.org/wiki/Whitespace_character#Unicode
-    char in [to_charcode(" "), to_charcode("\n"), to_charcode("\t"), to_charcode("\v"), to_charcode("\f"), to_charcode("\r")]
+    char in [
+      to_charcode(" "),
+      to_charcode("\n"),
+      to_charcode("\t"),
+      to_charcode("\v"),
+      to_charcode("\f"),
+      to_charcode("\r")
+    ]
   end
 
   @doc """

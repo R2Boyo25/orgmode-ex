@@ -1,14 +1,14 @@
 defmodule Orgmode.Parser do
   import Orgmode.Error
   import ExEarlyRet
-  
+
   @moduledoc """
   Parses Org-mode files.
-  """  
-  
+  """
+
   @doc """
   Parse a tokenized Org-mode file.
-  
+
       iex> Orgmode.Parser.parse([{:metadef, "tItLe", "This is a test!"}, {:heading, "foo", 1}, {:text, "Hello!"}, {:heading, "bar", 2}, {:heading, "baz", 1}])
       {:ok, %{sections: [%{name: "foo", level: 1, content: [{:paragraph, "Hello!"}]}, %{name: "bar", level: 2}, %{name: "baz", level: 1}], metadata: %{title: "This is a test!"}}}
   """
@@ -16,13 +16,14 @@ defmodule Orgmode.Parser do
     earlyret do
       fsm = Orgmode.Parser.FSM.new()
 
-      output = tokens
-      |> Enum.reduce(fsm, &parse_line/2)
+      output =
+        tokens
+        |> Enum.reduce(fsm, &parse_line/2)
 
       {:ok, %{sections: output.sections, metadata: output.metadata}}
     end
   end
-  
+
   def parse_line({:heading, name, level}, acc) do
     transition(%{acc | tmp: %{name: name, level: level}}, :heading)
   end
@@ -35,7 +36,12 @@ defmodule Orgmode.Parser do
     transition(%{acc | tmp: %{name: name, value: value}}, :metadata)
   end
 
-  bang "transition/2"
+  def parse_line({:table, cells}, acc) do
+    transition(%{acc | tmp: %{cells: cells}}, :table)
+  end
+
+  bang("transition/2")
+
   @doc """
       iex> Orgmode.Parser.transition(%{Orgmode.Parser.FSM.new() | tmp: %{name: "AUTHor", value: "Kazani"}}, :metadata)
       %Orgmode.Parser.FSM{
