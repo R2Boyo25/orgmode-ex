@@ -31,13 +31,7 @@ defmodule Orgmode.Parser.FSM do
   end
 
   def before_transition(struct, _, :paragraph) do
-    {last, rest} = List.pop_at(struct.sections, -1, %{})
-
-    # refactor this
-    new_sections =
-      rest ++ [Map.put(last, :content, Map.get(last, :content, []) ++ [{:paragraph, struct.tmp}])]
-
-    {:ok, %{struct | sections: new_sections}}
+    {:ok, append_to_last_content(struct, {:paragraph, struct.tmp})}
   end
 
   def before_transition(struct, _, :metadata) do
@@ -48,13 +42,7 @@ defmodule Orgmode.Parser.FSM do
   end
 
   def before_transition(struct, _, :table) do
-    {last, rest} = List.pop_at(struct.sections, -1, %{})
-
-    # refactor this
-    new_sections =
-      rest ++ [Map.put(last, :content, Map.get(last, :content, []) ++ [{:table, struct.tmp}])]
-
-    {:ok, %{struct | sections: new_sections}}
+    {:ok, append_to_last_content(struct, {:table, struct.tmp})}
   end
 
   def append_to_last_content(struct, element) do
