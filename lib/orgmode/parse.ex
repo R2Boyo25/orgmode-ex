@@ -9,8 +9,8 @@ defmodule Orgmode.Parser do
   @doc """
   Parse a tokenized Org-mode file.
 
-      iex> Orgmode.Parser.parse([{:metadef, "tItLe", "This is a test!"}, {:heading, "foo", 1}, {:text, "Hello!"}, {:heading, "bar", 2}, {:heading, "baz", 1}])
-      {:ok, %{sections: [%{name: "foo", level: 1, content: [{:paragraph, "Hello!"}]}, %{name: "bar", level: 2}, %{name: "baz", level: 1}], metadata: %{title: "This is a test!"}}}
+      iex> Orgmode.Parser.parse([{:metadef, "tItLe", "This is a test!"}, {:heading, "foo", 1, nil}, {:text, "Hello!"}, {:heading, "bar", 2, nil}, {:heading, "baz", 1, nil}])
+      {:ok, %{sections: [%{name: "foo", level: 1, content: [{:paragraph, "Hello!"}], todo_state: nil}, %{name: "bar", level: 2, todo_state: nil}, %{name: "baz", level: 1, todo_state: nil}], metadata: %{title: "This is a test!"}}}
   """
   def parse(tokens) do
     earlyret do
@@ -24,8 +24,8 @@ defmodule Orgmode.Parser do
     end
   end
 
-  def parse_line({:heading, name, level}, acc) do
-    transition(%{acc | tmp: %{name: name, level: level}}, :heading)
+  def parse_line({:heading, name, level, todo_state}, acc) do
+    transition(%{acc | tmp: %{name: name, level: level, todo_state: (if todo_state, do: Orgmode.Parser.FSM.str_to_atom(String.downcase(todo_state)), else: nil)}}, :heading)
   end
 
   def parse_line({:text, text}, acc) do
@@ -50,6 +50,9 @@ defmodule Orgmode.Parser do
           metadata: %{author: "Kazani"},
           tmp: %{name: "AUTHor", value: "Kazani"}
       }
+
+  iex> Orgmode.Parser.transition(%{Orgmode.Parser.FSM.new() | state: :table}, :metadata)
+  {:error, "invalid transition from table to metadata"}
   """
   def transition(fsm, state) do
     case Fsmx.transition(fsm, state) do

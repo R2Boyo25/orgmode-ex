@@ -1,7 +1,6 @@
 defmodule Orgmode.Error do
   use Bang
   import Orgmode.SimpleParser
-  import ExEarlyRet
 
   defexception message: "There was an unknown error within Orgmode."
 
@@ -12,6 +11,10 @@ defmodule Orgmode.Error do
     end
   end
 
+  @doc """
+      iex> Orgmode.Error.extract_function_notation([], "a_potato/2")
+      [a_potato: 2]
+  """
   def extract_function_notation(existing, current) do
     [_, current] = get_while(current, &is_whitespace/1)
 
@@ -30,10 +33,19 @@ defmodule Orgmode.Error do
     end
   end
 
+  @doc """
+      iex> Orgmode.Error.function_notation("a_potato/2 a_tomato/3")
+      [a_potato: 2, a_tomato: 3]
+  """
   def function_notation(notation) do
     extract_function_notation([], notation)
   end
 
+  @doc """
+      iex> :abc
+      iex> Orgmode.Error.func_notation(quote do: "abc/1")
+      [abc: 1]
+  """
   def func_notation(from) do
     extracted_string = List.first(Tuple.to_list(Code.eval_quoted(from)))
     Orgmode.Error.function_notation(extracted_string)

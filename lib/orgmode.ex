@@ -23,13 +23,20 @@ defmodule Orgmode do
         {:error, parsed}
       end
 
-      if filename != nil do
-        parsed = %{parsed | metadata: Map.put_new(parsed[:metadata], :title, filename)}
+      parsed =  if filename != nil do
+        %{parsed | metadata: Map.put_new(parsed[:metadata], :title, filename)}
+      else
+        parsed
       end
 
       {:ok, parsed}
     end
   end
+
+  @doc """
+      iex> Orgmode.parse_file!("/non-existent/file")
+      ** (Orgmode.Error) Org-mode file "/non-existent/file" does not exist.
+  """
 
   bang("parse_file/1")
 

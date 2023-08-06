@@ -14,7 +14,7 @@ defmodule Orgmode.Lexer do
       ...(1)> * Test
       ...(1)> Hi!
       ...(1)> \"\"\")
-      {:ok, [{:metadef, "TITLE", "This is a test"}, {:metadef, "DESCRIPTION", "The description"}, {:heading, "Test", 1}, {:text, "Hi!"}]}
+      {:ok, [{:metadef, "TITLE", "This is a test"}, {:metadef, "DESCRIPTION", "The description"}, {:heading, "Test", 1, nil}, {:text, "Hi!"}]}
   """
   def lex(text) do
     res =
@@ -49,6 +49,9 @@ defmodule Orgmode.Lexer do
 
   def merge_paragraphs(token, tokens) do
     case token do
+      {:comment} ->
+        tokens
+        
       {:text, content} ->
         merge_if(tokens, token, :text, fn last ->
           {:text, (last |> elem(1)) <> "\n" <> content}
@@ -62,19 +65,23 @@ defmodule Orgmode.Lexer do
     end
   end
 
-  @heading ~r/(\*+)\s*([^\n]+)/
+  @heading ~r/(\*+)\s*((?:TODO|DONE)?)\s*([^\n]+)/
   @metadef ~r/#\+([\w_]+):\s*([^\n]+)/
   @text ~r/[^\n]*/
   @table ~r/\|(?:[^\n\|]*\|)+/
+  @comment ~r/#\s+[^\n]*/
 
   def lex_line(line) do
     cond do
       line == "" ->
         {}
 
+      String.match?(line, @comment) ->
+        {:comment}
+        
       String.match?(line, @heading) ->
-        with [stars, content] <- tl(Regex.run(@heading, line)) do
-          {:heading, content, String.length(stars)}
+        with [stars, todo_state, content] <- tl(Regex.run(@heading, line)) do
+          {:heading, content, String.length(stars), (if todo_state != "", do: todo_state, else: nil)}
         end
 
       String.match?(line, @metadef) ->
@@ -92,9 +99,6 @@ defmodule Orgmode.Lexer do
         with [content] <- Regex.run(@text, line) do
           {:text, content}
         end
-
-      true ->
-        {:error, "not implemented"}
     end
   end
 end

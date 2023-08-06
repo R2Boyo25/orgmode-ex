@@ -8,11 +8,21 @@ defmodule OrgmodeTest do
   doctest Orgmode.Lexer
 
   test "Parses a metadef" do
-    Orgmode.parse!("#+TITLE: Much wow, such title!")
+    assert Orgmode.parse!("#+TITLE: Much wow, such title!", "metadef.org") == %{
+      metadata: %{title: "Much wow, such title!"},
+      sections: []
+    }
   end
 
   test "Parses the metadef document" do
-    Orgmode.parse_file!("test/test-files/metadef.org")
+    assert Orgmode.parse_file!("test/test-files/metadef.org") == %{
+      metadata: %{
+        author: "Kazani",
+        description: "This is a test of metadefs (#+NAME: value)",
+        title: "Metadef tests"
+      },
+      sections: []
+    }
   end
 
   test "Combines paragraphs" do
@@ -53,5 +63,22 @@ defmodule OrgmodeTest do
                }
              ]
            }
+  end
+
+  test "Todos" do
+    Orgmode.parse_file!("TODO.org")
+  end
+
+  test "Handles single-line comments" do
+    assert Orgmode.parse!("# a comment\nabc") == %{
+      metadata: %{},
+      sections: [
+        %{
+          content: [
+            paragraph: "abc"
+          ]
+        }
+      ]
+    }
   end
 end
