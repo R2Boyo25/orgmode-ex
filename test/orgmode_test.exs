@@ -83,7 +83,7 @@ defmodule OrgmodeTest do
   end
 
   test "Blocks" do
-    assert Orgmode.parse!("Hello!\n#+BEGIN_SRC scheme\n(+ 1 2)\n#+END_SRC\nGoodbye!") == %{
+    assert Orgmode.parse!("Hello!\n#+BEGIN_SRC scheme\n  (+ 1 2)\n    (display \"This is a test!\")\n#+END_SRC\nGoodbye!") == %{
              metadata: %{},
              sections: [
                %{
@@ -91,7 +91,7 @@ defmodule OrgmodeTest do
                    paragraph: "Hello!",
                    src: %{
                      args: ["scheme"],
-                     content: "(+ 1 2)"
+                     content: "(+ 1 2)\n  (display \"This is a test!\")"
                    },
                    paragraph: "Goodbye!"
                  ]

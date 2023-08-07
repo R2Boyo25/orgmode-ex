@@ -79,6 +79,12 @@ defmodule Orgmode.Lexer do
 
     String.split(args)
   end
+
+  def left_trim_block_equally(content) do
+    left_padding = Enum.min(Enum.map(String.split(content, "\n"), fn line -> length Orgmode.SimpleParser.get_while(line, &Orgmode.SimpleParser.is_whitespace/1) end))
+
+    Enum.join(Enum.map(String.split(content, "\n"), fn line -> String.slice(line, left_padding..-1) end), "\n")
+  end
   
   @end_block ~r/#\+END_([\w]+)/i
 
@@ -92,7 +98,7 @@ defmodule Orgmode.Lexer do
           String.match?(line, @end_block) ->
             {with {last, rest} <- List.pop_at(tokens, -1, nil) do
                 rest ++
-                  [{last |> elem(0), split_arguments(last |> elem(1)), last |> elem(2)}]
+                  [{last |> elem(0), split_arguments(last |> elem(1)), left_trim_block_equally(last |> elem(2))}]
               end, :normal}
 
           true ->
