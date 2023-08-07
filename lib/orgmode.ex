@@ -23,11 +23,12 @@ defmodule Orgmode do
         {:error, parsed}
       end
 
-      parsed =  if filename != nil do
-        %{parsed | metadata: Map.put_new(parsed[:metadata], :title, filename)}
-      else
-        parsed
-      end
+      parsed =
+        if filename != nil do
+          %{parsed | metadata: Map.put_new(parsed[:metadata], :title, filename)}
+        else
+          parsed
+        end
 
       {:ok, parsed}
     end

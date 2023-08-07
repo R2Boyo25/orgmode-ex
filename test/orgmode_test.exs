@@ -9,20 +9,20 @@ defmodule OrgmodeTest do
 
   test "Parses a metadef" do
     assert Orgmode.parse!("#+TITLE: Much wow, such title!", "metadef.org") == %{
-      metadata: %{title: "Much wow, such title!"},
-      sections: []
-    }
+             metadata: %{title: "Much wow, such title!"},
+             sections: []
+           }
   end
 
   test "Parses the metadef document" do
     assert Orgmode.parse_file!("test/test-files/metadef.org") == %{
-      metadata: %{
-        author: "Kazani",
-        description: "This is a test of metadefs (#+NAME: value)",
-        title: "Metadef tests"
-      },
-      sections: []
-    }
+             metadata: %{
+               author: "Kazani",
+               description: "This is a test of metadefs (#+NAME: value)",
+               title: "Metadef tests"
+             },
+             sections: []
+           }
   end
 
   test "Combines paragraphs" do
@@ -30,14 +30,14 @@ defmodule OrgmodeTest do
            First paragraph
 
            Second paragraph
-           Second line of second paragraph
+             ...continuation line
            """) == %{
              metadata: %{},
              sections: [
                %{
                  content: [
                    paragraph: "First paragraph",
-                   paragraph: "Second paragraph\nSecond line of second paragraph"
+                   paragraph: "Second paragraph ...continuation line"
                  ]
                }
              ]
@@ -71,14 +71,32 @@ defmodule OrgmodeTest do
 
   test "Handles single-line comments" do
     assert Orgmode.parse!("# a comment\nabc") == %{
-      metadata: %{},
-      sections: [
-        %{
-          content: [
-            paragraph: "abc"
-          ]
-        }
-      ]
-    }
+             metadata: %{},
+             sections: [
+               %{
+                 content: [
+                   paragraph: "abc"
+                 ]
+               }
+             ]
+           }
+  end
+
+  test "Blocks" do
+    assert Orgmode.parse!("Hello!\n#+BEGIN_SRC scheme\n(+ 1 2)\n#+END_SRC\nGoodbye!") == %{
+             metadata: %{},
+             sections: [
+               %{
+                 content: [
+                   paragraph: "Hello!",
+                   src: %{
+                     args: ["scheme"],
+                     content: "(+ 1 2)"
+                   },
+                   paragraph: "Goodbye!"
+                 ]
+               }
+             ]
+           }
   end
 end

@@ -5,13 +5,16 @@ defmodule Orgmode.Parser.FSM do
 
   defstruct [:state, :sections, :metadata, :tmp]
 
+  @main_fsm [:table, :paragraph, :heading, :src]
+  
   use Fsmx.Struct,
     transitions: %{
-      :begin => [:metadata, :heading, :paragraph, :table],
-      :metadata => [:metadata, :heading, :paragraph, :table],
-      :heading => [:paragraph, :table, :heading],
-      :paragraph => [:paragraph, :heading, :table],
-      :table => [:table, :paragraph, :heading]
+      :begin => [:metadata] ++ @main_fsm,
+      :metadata => [:metadata] ++ @main_fsm,
+      :heading => @main_fsm,
+      :paragraph => @main_fsm,
+      :table => @main_fsm,
+      :src => @main_fsm
     }
 
   @doc """
@@ -44,6 +47,10 @@ defmodule Orgmode.Parser.FSM do
   def before_transition(struct, _, :table) do
     {:ok, append_to_last_content(struct, {:table, struct.tmp})}
   end
+
+  def before_transition(struct, _, :src) do
+    {:ok, append_to_last_content(struct, {:src, struct.tmp})}
+    end
 
   def append_to_last_content(struct, element) do
     {last, rest} = List.pop_at(struct.sections, -1, %{})

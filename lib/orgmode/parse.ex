@@ -25,7 +25,21 @@ defmodule Orgmode.Parser do
   end
 
   def parse_line({:heading, name, level, todo_state}, acc) do
-    transition(%{acc | tmp: %{name: name, level: level, todo_state: (if todo_state, do: Orgmode.Parser.FSM.str_to_atom(String.downcase(todo_state)), else: nil)}}, :heading)
+    transition(
+      %{
+        acc
+        | tmp: %{
+            name: name,
+            level: level,
+            todo_state:
+              if(todo_state,
+                do: Orgmode.Parser.FSM.str_to_atom(String.downcase(todo_state)),
+                else: nil
+              )
+          }
+      },
+      :heading
+    )
   end
 
   def parse_line({:text, text}, acc) do
@@ -40,6 +54,10 @@ defmodule Orgmode.Parser do
     transition(%{acc | tmp: %{cells: cells}}, :table)
   end
 
+  def parse_line({:src, args, content}, acc) do
+    transition(%{acc | tmp: %{args: args, content: content}}, :src)
+  end
+
   bang("transition/2")
 
   @doc """
@@ -51,8 +69,8 @@ defmodule Orgmode.Parser do
           tmp: %{name: "AUTHor", value: "Kazani"}
       }
 
-  iex> Orgmode.Parser.transition(%{Orgmode.Parser.FSM.new() | state: :table}, :metadata)
-  {:error, "invalid transition from table to metadata"}
+      iex> Orgmode.Parser.transition(%{Orgmode.Parser.FSM.new() | state: :table}, :metadata)
+      {:error, "invalid transition from table to metadata"}
   """
   def transition(fsm, state) do
     case Fsmx.transition(fsm, state) do
