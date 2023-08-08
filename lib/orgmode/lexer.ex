@@ -141,7 +141,7 @@ defmodule Orgmode.Lexer do
              :block}
 
           [type] ->
-            {tokens ++ [{Orgmode.Parser.FSM.str_to_atom(String.downcase(type)), nil, ""}], :block}
+            {tokens ++ [{Orgmode.Parser.FSM.str_to_atom(String.downcase(type)), "", ""}], :block}
         end
 
       String.match?(line, @heading) ->
