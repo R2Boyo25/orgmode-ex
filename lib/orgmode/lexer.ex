@@ -1,6 +1,6 @@
 defmodule Orgmode.Lexer do
   import ExEarlyRet
-
+  
   @moduledoc """
   A lexer for Orgmode.
   """
@@ -19,6 +19,8 @@ defmodule Orgmode.Lexer do
     res =
       text
       |> String.split("\n")
+      |> Enum.reduce({[], false}, &merge_lines/2)
+      |> elem(0)
       |> Enum.reduce({[], :normal}, &lex_line/2)
       |> elem(0)
       |> Enum.reduce([], &merge_paragraphs/2)
@@ -61,9 +63,7 @@ defmodule Orgmode.Lexer do
 
       {:text, content} ->
         merge_if(tokens, token, :text, fn last ->
-          separator = if String.match?(content, @merge_match), do: " ", else: "\n"
-
-          {:text, String.trim(last |> elem(1)) <> separator <> String.trim(content)}
+          {:text, String.trim(last |> elem(1)) <> "\n" <> String.trim(content)}
         end)
 
       {:table, rows} ->
@@ -85,8 +85,29 @@ defmodule Orgmode.Lexer do
 
     Enum.join(Enum.map(String.split(content, "\n"), fn line -> String.slice(line, left_padding..-1) end), "\n")
   end
-  
+
+  @begin_block ~r/#\+BEGIN_([\w]+)\s*([^\n]+)?/i
   @end_block ~r/#\+END_([\w]+)/i
+  
+  def merge_lines(line, {lines, in_block}) do
+    if length(lines) > 0 do
+      if in_block or String.match?(line, @begin_block) do
+        in_block = not String.match?(line, @end_block)
+        
+        {lines ++ [line], in_block}
+      else
+        {last, rest} = List.pop_at(lines, -1, nil)
+        
+        {rest ++ if String.match?(line, @merge_match) do
+          [String.trim_trailing(last) <> " " <> String.trim_leading(line)]
+        else
+          [last, line]
+        end, false}
+      end
+    else
+      {[line], String.match?(line, @begin_block)}
+    end    
+  end
 
   def lex_line(line, {tokens, state}) do
     case state do
@@ -124,7 +145,6 @@ defmodule Orgmode.Lexer do
   @text ~r/[^\n]*/
   @table ~r/\|(?:[^\n\|]*\|)+/
   @comment ~r/#\s+([^\n]*)/
-  @begin_block ~r/#\+BEGIN_([\w]+)\s*([^\n]+)?/i
 
   def lex_normal(line, tokens) do
     cond do
@@ -148,25 +168,25 @@ defmodule Orgmode.Lexer do
         with [stars, todo_state, content] <- tl(Regex.run(@heading, line)) do
           {tokens ++
              [
-               {:heading, content, String.length(stars),
+               {:heading, Orgmode.InlineParser.parse_inline(content), String.length(stars),
                 if(todo_state != "", do: todo_state, else: nil)}
              ], :normal}
         end
 
       String.match?(line, @metadef) ->
         with [name, value] <- tl(Regex.run(@metadef, line)) do
-          {tokens ++ [{:metadef, name, value}], :normal}
+          {tokens ++ [{:metadef, name, Orgmode.InlineParser.parse_inline(value)}], :normal}
         end
 
       String.match?(line, @table) ->
         with table_cell <-
-               line |> String.trim("|") |> String.split("|") |> Enum.map(&String.trim/1) do
+               line |> String.trim("|") |> String.split("|") |> Enum.map(&String.trim/1) |> Enum.map(&Orgmode.InlineParser.parse_inline/1) do
           {tokens ++ [{:table, [table_cell]}], :normal}
         end
 
       String.match?(line, @text) ->
         with [content] <- Regex.run(@text, line) do
-          {tokens ++ [{:text, content}], :normal}
+          {tokens ++ [{:text, Orgmode.InlineParser.parse_inline(content)}], :normal}
         end
     end
   end

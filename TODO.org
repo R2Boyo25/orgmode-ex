@@ -1,3 +1,4 @@
 * DONE setup fancy testing (ideally doctests - https://elixir-lang.org/getting-started/mix-otp/docs-tests-and-with.html)
 * TODO add https://github.com/parroty/excoveralls
 * TODO Figure out https://en.wikipedia.org/wiki/Test-driven_development#Fakes,_mocks_and_integration_tests
+* TODO get :time from modification time if possible

@@ -6,9 +6,10 @@ defmodule OrgmodeTest do
   doctest Orgmode.Parser
   doctest Orgmode.Parser.FSM
   doctest Orgmode.Lexer
+  doctest Orgmode.InlineParser
 
   test "Parses a metadef" do
-    assert Orgmode.parse!("#+TITLE: Much wow, such title!", "metadef.org") == %{
+    assert Orgmode.parse!("#+TITLE: /Much wow/, such title!", "metadef.org") == %{
              metadata: %{title: "Much wow, such title!"},
              sections: []
            }
